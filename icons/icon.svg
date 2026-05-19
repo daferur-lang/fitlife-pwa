@@ -1,11 +1,60 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
-  <rect width="200" height="200" rx="40" fill="#1A1A2E"/>
-  <circle cx="100" cy="55" r="20" fill="#7CB518"/>
-  <rect x="80" y="78" width="40" height="50" rx="10" fill="#7CB518"/>
-  <rect x="60" y="82" width="18" height="36" rx="8" fill="#7CB518"/>
-  <rect x="122" y="82" width="18" height="36" rx="8" fill="#7CB518"/>
-  <rect x="82" y="128" width="16" height="40" rx="8" fill="#7CB518"/>
-  <rect x="102" y="128" width="16" height="40" rx="8" fill="#7CB518"/>
-  <circle cx="148" cy="95" r="14" fill="none" stroke="#5A8A0F" stroke-width="4"/>
-  <path d="M148 88 L148 102 M141 95 L155 95" stroke="#5A8A0F" stroke-width="3" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4ADE80"/>
+      <stop offset="50%" stop-color="#22C55E"/>
+      <stop offset="100%" stop-color="#14B8A6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
+
+  <!-- Outer circle (open at top-right) -->
+  <path d="M 256 100 A 156 156 0 1 0 412 256" stroke="white" stroke-width="14" fill="none" stroke-linecap="round"/>
+
+  <!-- Stylized figure: head -->
+  <circle cx="290" cy="180" r="26" fill="white"/>
+
+  <!-- Body curve (raised arm to side) -->
+  <path d="M 290 210
+           C 270 220, 250 240, 245 280
+           C 240 320, 250 360, 270 380
+           L 310 380
+           C 330 360, 340 320, 335 280
+           C 332 240, 350 200, 380 170
+           C 360 165, 320 180, 305 210 Z"
+        fill="white"/>
+
+  <!-- Apple body -->
+  <path d="M 180 340
+           C 150 340, 130 360, 130 395
+           C 130 430, 150 460, 180 460
+           C 195 460, 200 455, 210 455
+           C 220 455, 225 460, 240 460
+           C 270 460, 290 430, 290 395
+           C 290 360, 270 340, 240 340
+           C 225 340, 220 350, 210 350
+           C 200 350, 195 340, 180 340 Z"
+        fill="white"/>
+
+  <!-- Apple leaf -->
+  <path d="M 215 335
+           C 220 320, 235 310, 250 315
+           C 245 330, 230 340, 215 335 Z"
+        fill="white"/>
+
+  <!-- Apple stem -->
+  <rect x="208" y="328" width="5" height="14" rx="2" fill="white"/>
+
+  <!-- Dumbbell bar -->
+  <rect x="320" y="408" width="100" height="14" rx="4" fill="white"/>
+
+  <!-- Dumbbell left weight -->
+  <rect x="305" y="392" width="14" height="46" rx="4" fill="white"/>
+  <rect x="293" y="400" width="12" height="30" rx="3" fill="white"/>
+
+  <!-- Dumbbell right weight -->
+  <rect x="421" y="392" width="14" height="46" rx="4" fill="white"/>
+  <rect x="435" y="400" width="12" height="30" rx="3" fill="white"/>
 </svg>
