@@ -1,0 +1,15 @@
+{
+  "name": "FitLife — Coach Personal",
+  "short_name": "FitLife",
+  "description": "Tu nutricionista y entrenador personal de pérdida de peso",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#1A1A2E",
+  "theme_color": "#7CB518",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "categories": ["health", "fitness"],
+  "lang": "es"
+}

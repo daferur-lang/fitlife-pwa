@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1A1A2E">
+  <meta name="description" content="Tu nutricionista y entrenador personal de pérdida de peso">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>FitLife — Coach Personal</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon.svg">
+  <link rel="apple-touch-icon" href="icons/icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<!-- ===== SPLASH ===== -->
+<div id="splash" class="splash">
+  <div class="splash-inner">
+    <svg class="splash-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="25" r="18" fill="#7CB518"/>
+      <rect x="34" y="44" width="32" height="28" rx="8" fill="#7CB518"/>
+      <rect x="20" y="48" width="13" height="22" rx="6" fill="#5A8A0F"/>
+      <rect x="67" y="48" width="13" height="22" rx="6" fill="#5A8A0F"/>
+      <rect x="36" y="72" width="12" height="20" rx="6" fill="#5A8A0F"/>
+      <rect x="52" y="72" width="12" height="20" rx="6" fill="#5A8A0F"/>
+    </svg>
+    <h1>FitLife</h1>
+    <p>Tu coach personal de pérdida de peso</p>
+    <div class="splash-dots"><span></span><span></span><span></span></div>
+  </div>
+</div>
+
+<!-- ===== ONBOARDING ===== -->
+<div id="onboarding" class="onboarding hidden">
+  <div class="ob-progress"><div class="ob-progress-bar" style="width:20%"></div></div>
+  <div class="ob-steps">
+
+    <!-- Step 1: Bienvenida -->
+    <div class="ob-step">
+      <div class="ob-icon">🎯</div>
+      <h2>¡Empieza tu transformación!</h2>
+      <p>Crea tu perfil y obtén un plan personalizado de dieta y entrenamiento diseñado para ti.</p>
+      <div class="ob-form">
+        <input class="ob-input" id="ob-name" type="text" placeholder="Tu nombre" autocomplete="given-name">
+        <input class="ob-input" id="ob-goal" type="text" placeholder="¿Cuál es tu objetivo? (ej: perder 10kg)" autocomplete="off">
+        <button class="ob-btn" onclick="obNext()">Continuar →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Datos corporales -->
+    <div class="ob-step">
+      <div class="ob-icon">📊</div>
+      <h2>Tus datos</h2>
+      <p>Los usamos para calcular tu plan de calorías exacto. Solo los guardamos en tu dispositivo.</p>
+      <div class="ob-form">
+        <div class="ob-2col">
+          <input class="ob-input" id="ob-age" type="number" placeholder="Edad (años)" min="15" max="90">
+          <select class="ob-input" id="ob-gender">
+            <option value="">Sexo</option>
+            <option value="male">Hombre</option>
+            <option value="female">Mujer</option>
+          </select>
+        </div>
+        <div class="ob-2col">
+          <input class="ob-input" id="ob-height" type="number" placeholder="Altura (cm)" min="140" max="220">
+          <input class="ob-input" id="ob-cw" type="number" placeholder="Peso actual (kg)" min="40" max="250" step="0.1">
+        </div>
+        <input class="ob-input" id="ob-gw" type="number" placeholder="Peso objetivo (kg)" min="40" max="250" step="0.1">
+        <button class="ob-btn" onclick="obNext()">Continuar →</button>
+        <button class="ob-back" onclick="obBack()">← Volver</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Actividad -->
+    <div class="ob-step">
+      <div class="ob-icon">⚡</div>
+      <h2>¿Cuánto te mueves?</h2>
+      <p>Sé honesto/a — esto define tu plan de calorías diario.</p>
+      <div class="ob-chips">
+        <button class="ob-chip" data-group="activity" onclick="selectChip('activity','sedentary',this)">🛋️ Sedentario</button>
+        <button class="ob-chip" data-group="activity" onclick="selectChip('activity','light',this)">🚶 Ligero</button>
+        <button class="ob-chip" data-group="activity" onclick="selectChip('activity','moderate',this)">🏃 Moderado</button>
+        <button class="ob-chip" data-group="activity" onclick="selectChip('activity','active',this)">🏋️ Activo</button>
+        <button class="ob-chip" data-group="activity" onclick="selectChip('activity','very_active',this)">🔥 Muy activo</button>
+      </div>
+      <div class="ob-form" style="margin-top:24px">
+        <button class="ob-btn" onclick="obNext()">Continuar →</button>
+        <button class="ob-back" onclick="obBack()">← Volver</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Dieta -->
+    <div class="ob-step">
+      <div class="ob-icon">🥗</div>
+      <h2>¿Qué dieta prefieres?</h2>
+      <p>Elige la que mejor se adapte a ti. Podrás cambiarla cuando quieras desde ajustes.</p>
+      <div class="ob-chips">
+        <button class="ob-chip" data-group="diet" onclick="selectChip('diet','keto',this)">🥑 Keto</button>
+        <button class="ob-chip" data-group="diet" onclick="selectChip('diet','mediterranean',this)">🫒 Mediterránea</button>
+        <button class="ob-chip" data-group="diet" onclick="selectChip('diet','intermittent_fasting',this)">⏱️ Ayuno 16:8</button>
+        <button class="ob-chip" data-group="diet" onclick="selectChip('diet','dash',this)">💙 DASH</button>
+        <button class="ob-chip" data-group="diet" onclick="selectChip('diet','plant_based',this)">🌱 Plant-Based</button>
+      </div>
+      <div class="ob-form" style="margin-top:24px">
+        <button class="ob-btn" onclick="obNext()">Continuar →</button>
+        <button class="ob-back" onclick="obBack()">← Volver</button>
+      </div>
+    </div>
+
+    <!-- Step 5: Entorno -->
+    <div class="ob-step">
+      <div class="ob-icon">🏋️</div>
+      <h2>¿Dónde entrenas?</h2>
+      <p>Te diseñaremos las rutinas perfectas para tu situación. Sin excusas.</p>
+      <div class="ob-chips">
+        <button class="ob-chip" data-group="equipment" onclick="selectChip('equipment','gym',this)" style="font-size:1rem;padding:14px 28px">🏋️ Gimnasio</button>
+        <button class="ob-chip" data-group="equipment" onclick="selectChip('equipment','home',this)" style="font-size:1rem;padding:14px 28px">🏠 En casa</button>
+      </div>
+      <div class="ob-form" style="margin-top:32px">
+        <button class="ob-btn" onclick="obNext()">🚀 ¡Comenzar mi plan!</button>
+        <button class="ob-back" onclick="obBack()">← Volver</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="app" class="app-shell hidden">
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div style="width:36px"></div>
+    <h1 class="topbar-title" id="topbar-title">Inicio</h1>
+    <div class="topbar-right">
+      <div class="topbar-avatar" onclick="showSettings()" id="user-avatar">F</div>
+    </div>
+  </header>
+
+  <!-- Screens -->
+  <main class="main-content">
+    <section id="screen-dashboard" class="screen"></section>
+    <section id="screen-diet" class="screen"></section>
+    <section id="screen-workout" class="screen"></section>
+    <section id="screen-track" class="screen"></section>
+    <section id="screen-chat" class="screen"></section>
+  </main>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <button class="nav-btn" id="nav-dashboard" onclick="navigate('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      <span>Inicio</span>
+      <div class="nav-dot"></div>
+    </button>
+    <button class="nav-btn" id="nav-diet" onclick="navigate('diet')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>
+      </svg>
+      <span>Dieta</span>
+      <div class="nav-dot"></div>
+    </button>
+    <button class="nav-btn" id="nav-workout" onclick="navigate('workout')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8h1a4 4 0 0 1 0 8h-1m-2-4H7m14 0h-2M5 8H4a4 4 0 0 0 0 8h1m2-4h10M5 12H3"/>
+      </svg>
+      <span>Entreno</span>
+      <div class="nav-dot"></div>
+    </button>
+    <button class="nav-btn" id="nav-track" onclick="navigate('track')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+      </svg>
+      <span>Progreso</span>
+      <div class="nav-dot"></div>
+    </button>
+    <button class="nav-btn" id="nav-chat" onclick="navigate('chat')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      <span>AI Coach</span>
+      <div class="nav-dot"></div>
+    </button>
+  </nav>
+</div>
+
+<!-- Settings Modal -->
+<div id="settings-modal" class="hidden"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/gemini.js"></script>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
