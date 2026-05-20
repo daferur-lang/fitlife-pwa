@@ -80,8 +80,10 @@ svg{display:block}
 .onboarding{position:fixed;inset:0;background:var(--dark);z-index:1000;overflow:hidden}
 .ob-progress{height:4px;background:rgba(255,255,255,0.15);position:absolute;top:0;left:0;right:0}
 .ob-progress-bar{height:100%;background:var(--primary);transition:width 0.4s ease;border-radius:0 2px 2px 0}
-.ob-steps{display:flex;width:500%;height:100%;transition:transform 0.4s cubic-bezier(0.4,0,0.2,1)}
-.ob-step{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;color:#fff;min-width:20%}
+.ob-steps{height:100%;overflow-y:auto}
+.ob-step{display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;color:#fff;min-height:100%;width:100%}
+.ob-step.active{display:flex;animation:ob-step-in 0.35s ease}
+@keyframes ob-step-in{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:translateX(0)}}
 .ob-icon{font-size:4rem;margin-bottom:20px;animation:float 3s ease-in-out infinite}
 .ob-step h2{font-size:1.6rem;font-weight:700;margin-bottom:10px;line-height:1.2}
 .ob-step p{color:rgba(255,255,255,0.65);font-size:0.9rem;line-height:1.6;margin-bottom:32px}
