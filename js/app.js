@@ -502,76 +502,206 @@ function renderWeekOverview(plan, days, todayIdx) {
 }
 
 function renderExerciseSVG(anim) {
+  const ground = `<line class="ground" x1="8" y1="88" x2="92" y2="88"/>`;
   const svgs = {
-    squat: `<svg class="ex-svg anim-squat" viewBox="0 0 60 60" fill="none">
-      <circle cx="30" cy="10" r="8" fill="#7CB518"/>
-      <rect x="22" y="20" width="16" height="18" rx="4" fill="#7CB518"/>
-      <rect x="14" y="24" width="8" height="14" rx="3" fill="#7CB518"/>
-      <rect x="38" y="24" width="8" height="14" rx="3" fill="#7CB518"/>
-      <rect x="20" y="38" width="9" height="14" rx="3" fill="#5A8A0F"/>
-      <rect x="31" y="38" width="9" height="14" rx="3" fill="#5A8A0F"/>
+    squat: `<svg class="ex-svg" viewBox="0 0 100 100">${ground}
+      <!-- Plates left -->
+      <rect class="plate" x="6" y="20" width="6" height="18" rx="1"/>
+      <rect class="plate" x="14" y="23" width="4" height="12" rx="1"/>
+      <!-- Plates right -->
+      <rect class="plate" x="88" y="20" width="6" height="18" rx="1"/>
+      <rect class="plate" x="82" y="23" width="4" height="12" rx="1"/>
+      <!-- Barbell -->
+      <rect class="gear sq-torso" x="10" y="28" width="80" height="3" rx="1"/>
+      <!-- Upper body -->
+      <g class="sq-torso">
+        <circle class="skin" cx="50" cy="16" r="7"/>
+        <rect class="skin" x="42" y="22" width="16" height="22" rx="4"/>
+        <rect class="skin" x="36" y="26" width="5" height="14" rx="2"/>
+        <rect class="skin" x="59" y="26" width="5" height="14" rx="2"/>
+      </g>
+      <!-- Thighs (rotate at hip) -->
+      <rect class="skin-d sq-thigh-l" x="40" y="44" width="6" height="16" rx="2"/>
+      <rect class="skin-d sq-thigh-r" x="54" y="44" width="6" height="16" rx="2"/>
+      <!-- Shins -->
+      <rect class="skin-d sq-shin-l" x="40" y="60" width="6" height="22" rx="2"/>
+      <rect class="skin-d sq-shin-r" x="54" y="60" width="6" height="22" rx="2"/>
+      <!-- Feet -->
+      <ellipse class="gear" cx="43" cy="85" rx="6" ry="2"/>
+      <ellipse class="gear" cx="57" cy="85" rx="6" ry="2"/>
     </svg>`,
-    pushup: `<svg class="ex-svg anim-pushup" viewBox="0 0 60 60" fill="none">
-      <circle cx="12" cy="18" r="7" fill="#7CB518"/>
-      <rect x="18" y="24" width="28" height="10" rx="4" fill="#7CB518"/>
-      <rect x="14" y="15" width="8" height="14" rx="3" fill="#7CB518" transform="rotate(30 18 22)"/>
-      <rect x="40" y="30" width="8" height="12" rx="3" fill="#5A8A0F" transform="rotate(-10 44 36)"/>
-      <rect x="20" y="32" width="8" height="12" rx="3" fill="#5A8A0F" transform="rotate(10 24 38)"/>
+
+    pushup: `<svg class="ex-svg" viewBox="0 0 100 100">${ground}
+      <g class="pu-body">
+        <!-- Body horizontal -->
+        <circle class="skin" cx="20" cy="50" r="7"/>
+        <rect class="skin" x="26" y="46" width="38" height="10" rx="4"/>
+        <rect class="skin-d" x="60" y="46" width="20" height="9" rx="3"/>
+      </g>
+      <!-- Arms (rotate at shoulder) -->
+      <rect class="skin pu-arm-l" x="28" y="50" width="5" height="22" rx="2"/>
+      <rect class="skin pu-arm-r" x="58" y="50" width="5" height="22" rx="2"/>
+      <!-- Legs -->
+      <rect class="skin-d" x="76" y="55" width="6" height="22" rx="2" transform="rotate(8 79 66)"/>
+      <rect class="skin-d" x="82" y="55" width="6" height="22" rx="2" transform="rotate(8 85 66)"/>
     </svg>`,
-    curl: `<svg class="ex-svg" viewBox="0 0 60 60" fill="none">
-      <circle cx="30" cy="10" r="8" fill="#7CB518"/>
-      <rect x="22" y="20" width="16" height="18" rx="4" fill="#7CB518"/>
-      <rect x="14" y="24" width="8" height="14" rx="3" class="anim-curl" fill="#7CB518"/>
-      <rect x="38" y="24" width="8" height="14" rx="3" fill="#7CB518"/>
-      <rect x="22" y="38" width="9" height="16" rx="3" fill="#5A8A0F"/>
-      <rect x="29" y="38" width="9" height="16" rx="3" fill="#5A8A0F"/>
+
+    curl: `<svg class="ex-svg" viewBox="0 0 100 100">${ground}
+      <!-- Head -->
+      <circle class="skin" cx="50" cy="16" r="7"/>
+      <!-- Torso -->
+      <rect class="skin" x="42" y="22" width="16" height="26" rx="4"/>
+      <!-- Upper arms (fixed at shoulder, elbow at bottom) -->
+      <rect class="skin" x="32" y="26" width="5" height="22" rx="2"/>
+      <rect class="skin" x="63" y="26" width="5" height="22" rx="2"/>
+      <!-- Forearms with dumbbells (rotate at elbow) -->
+      <g class="cu-forearm-l">
+        <rect class="skin-d" x="32" y="48" width="5" height="18" rx="2"/>
+        <rect class="plate" x="26" y="64" width="6" height="10" rx="1"/>
+        <rect class="plate" x="37" y="64" width="6" height="10" rx="1"/>
+        <rect class="gear" x="32" y="67" width="5" height="4"/>
+      </g>
+      <g class="cu-forearm-r">
+        <rect class="skin-d" x="63" y="48" width="5" height="18" rx="2"/>
+        <rect class="plate" x="57" y="64" width="6" height="10" rx="1"/>
+        <rect class="plate" x="68" y="64" width="6" height="10" rx="1"/>
+        <rect class="gear" x="63" y="67" width="5" height="4"/>
+      </g>
+      <!-- Legs -->
+      <rect class="skin-d" x="43" y="48" width="6" height="34" rx="2"/>
+      <rect class="skin-d" x="51" y="48" width="6" height="34" rx="2"/>
+      <ellipse class="gear" cx="46" cy="85" rx="5" ry="2"/>
+      <ellipse class="gear" cx="54" cy="85" rx="5" ry="2"/>
     </svg>`,
-    run: `<svg class="ex-svg anim-run" viewBox="0 0 60 60" fill="none">
-      <circle cx="30" cy="9" r="8" fill="#7CB518"/>
-      <rect x="23" y="19" width="14" height="16" rx="4" fill="#7CB518" transform="rotate(10 30 27)"/>
-      <rect x="12" y="22" width="8" height="14" rx="3" fill="#7CB518" transform="rotate(-20 16 29)"/>
-      <rect x="38" y="26" width="8" height="14" rx="3" fill="#7CB518" transform="rotate(20 42 33)"/>
-      <rect x="22" y="35" width="9" height="16" rx="3" fill="#5A8A0F" transform="rotate(-15 26 43)"/>
-      <rect x="30" y="35" width="9" height="16" rx="3" fill="#5A8A0F" transform="rotate(25 34 43)"/>
+
+    run: `<svg class="ex-svg" viewBox="0 0 100 100">${ground}
+      <g class="ru-body">
+        <circle class="skin" cx="50" cy="18" r="7"/>
+        <rect class="skin" x="44" y="24" width="14" height="18" rx="4" transform="rotate(5 51 33)"/>
+      </g>
+      <!-- Arms (swing alternating) -->
+      <rect class="skin ru-arm-l" x="47" y="28" width="5" height="20" rx="2"/>
+      <rect class="skin ru-arm-r" x="48" y="28" width="5" height="20" rx="2"/>
+      <!-- Thighs (alternating) -->
+      <rect class="skin-d ru-thigh-l" x="47" y="48" width="6" height="22" rx="2"/>
+      <rect class="skin-d ru-thigh-r" x="47" y="48" width="6" height="22" rx="2"/>
+      <!-- Static shins coming off the thighs -->
+      <rect class="skin-d ru-thigh-l" x="47" y="68" width="5" height="16" rx="2" transform="translate(0,2)"/>
+      <rect class="skin-d ru-thigh-r" x="48" y="68" width="5" height="16" rx="2" transform="translate(0,2)"/>
     </svg>`,
-    plank: `<svg class="ex-svg anim-plank" viewBox="0 0 60 60" fill="none">
-      <circle cx="8" cy="28" r="7" fill="#7CB518"/>
-      <rect x="14" y="25" width="32" height="10" rx="4" fill="#7CB518"/>
-      <rect x="10" y="20" width="6" height="14" rx="3" fill="#7CB518"/>
-      <rect x="44" y="30" width="6" height="14" rx="3" fill="#5A8A0F"/>
-      <rect x="38" y="30" width="6" height="14" rx="3" fill="#5A8A0F"/>
+
+    plank: `<svg class="ex-svg" viewBox="0 0 100 100">${ground}
+      <g class="pl-body">
+        <!-- Forearms on ground -->
+        <rect class="skin-d" x="10" y="64" width="18" height="6" rx="2"/>
+        <rect class="skin-d" x="14" y="50" width="6" height="18" rx="2"/>
+        <!-- Head + torso line -->
+        <circle class="skin" cx="22" cy="46" r="7"/>
+        <rect class="skin" x="26" y="42" width="48" height="10" rx="4"/>
+        <!-- Glutes -->
+        <rect class="skin-d" x="68" y="40" width="14" height="14" rx="5"/>
+        <!-- Legs straight back -->
+        <rect class="skin-d" x="76" y="48" width="6" height="26" rx="2" transform="rotate(15 79 60)"/>
+        <rect class="skin-d" x="82" y="48" width="6" height="26" rx="2" transform="rotate(15 85 60)"/>
+      </g>
     </svg>`,
-    press: `<svg class="ex-svg" viewBox="0 0 60 60" fill="none">
-      <circle cx="30" cy="10" r="8" fill="#7CB518"/>
-      <rect x="22" y="20" width="16" height="16" rx="4" fill="#7CB518"/>
-      <rect x="10" y="10" width="10" height="28" rx="3" class="anim-press" fill="#7CB518"/>
-      <rect x="40" y="10" width="10" height="28" rx="3" class="anim-press" fill="#7CB518"/>
-      <rect x="22" y="36" width="9" height="16" rx="3" fill="#5A8A0F"/>
-      <rect x="29" y="36" width="9" height="16" rx="3" fill="#5A8A0F"/>
+
+    press: `<svg class="ex-svg" viewBox="0 0 100 100">${ground}
+      <!-- Head -->
+      <circle class="skin" cx="50" cy="32" r="7"/>
+      <!-- Torso -->
+      <rect class="skin" x="42" y="38" width="16" height="22" rx="4"/>
+      <!-- Arms going up -->
+      <g class="pr-arm-l">
+        <rect class="skin" x="34" y="14" width="5" height="28" rx="2"/>
+      </g>
+      <g class="pr-arm-r">
+        <rect class="skin" x="61" y="14" width="5" height="28" rx="2"/>
+      </g>
+      <!-- Dumbbells overhead -->
+      <g class="pr-bar">
+        <rect class="plate" x="28" y="10" width="6" height="14" rx="1"/>
+        <rect class="plate" x="39" y="10" width="6" height="14" rx="1"/>
+        <rect class="gear" x="34" y="14" width="5" height="6"/>
+        <rect class="plate" x="55" y="10" width="6" height="14" rx="1"/>
+        <rect class="plate" x="66" y="10" width="6" height="14" rx="1"/>
+        <rect class="gear" x="61" y="14" width="5" height="6"/>
+      </g>
+      <!-- Legs -->
+      <rect class="skin-d" x="43" y="60" width="6" height="22" rx="2"/>
+      <rect class="skin-d" x="51" y="60" width="6" height="22" rx="2"/>
+      <ellipse class="gear" cx="46" cy="85" rx="5" ry="2"/>
+      <ellipse class="gear" cx="54" cy="85" rx="5" ry="2"/>
     </svg>`,
-    jump: `<svg class="ex-svg anim-jump" viewBox="0 0 60 60" fill="none">
-      <circle cx="30" cy="8" r="8" fill="#7CB518"/>
-      <rect x="22" y="18" width="16" height="16" rx="4" fill="#7CB518"/>
-      <rect x="8" y="22" width="14" height="7" rx="3" fill="#7CB518" transform="rotate(-30 15 25)"/>
-      <rect x="38" y="22" width="14" height="7" rx="3" fill="#7CB518" transform="rotate(30 45 25)"/>
-      <rect x="22" y="34" width="9" height="18" rx="3" fill="#5A8A0F" transform="rotate(-10 26 43)"/>
-      <rect x="29" y="34" width="9" height="18" rx="3" fill="#5A8A0F" transform="rotate(10 34 43)"/>
+
+    jump: `<svg class="ex-svg" viewBox="0 0 100 100">${ground}
+      <g class="ju-body">
+        <circle class="skin" cx="50" cy="22" r="7"/>
+        <rect class="skin" x="42" y="28" width="16" height="20" rx="4"/>
+      </g>
+      <!-- Arms swing up/out -->
+      <rect class="skin ju-arm-l" x="46" y="30" width="5" height="20" rx="2"/>
+      <rect class="skin ju-arm-r" x="49" y="30" width="5" height="20" rx="2"/>
+      <!-- Thighs -->
+      <rect class="skin-d ju-thigh-l" x="42" y="50" width="6" height="20" rx="2"/>
+      <rect class="skin-d ju-thigh-r" x="52" y="50" width="6" height="20" rx="2"/>
+      <!-- Shins -->
+      <rect class="skin-d ju-thigh-l" x="42" y="68" width="6" height="16" rx="2"/>
+      <rect class="skin-d ju-thigh-r" x="52" y="68" width="6" height="16" rx="2"/>
     </svg>`,
-    row: `<svg class="ex-svg anim-row" viewBox="0 0 60 60" fill="none">
-      <circle cx="10" cy="20" r="7" fill="#7CB518"/>
-      <rect x="14" y="22" width="22" height="11" rx="4" fill="#7CB518" transform="rotate(-20 25 27)"/>
-      <rect x="32" y="10" width="8" height="20" rx="3" fill="#7CB518" transform="rotate(-20 36 20)"/>
-      <rect x="14" y="30" width="9" height="20" rx="3" fill="#5A8A0F" transform="rotate(20 18 40)"/>
-      <rect x="22" y="32" width="9" height="20" rx="3" fill="#5A8A0F" transform="rotate(-10 26 42)"/>
+
+    row: `<svg class="ex-svg" viewBox="0 0 100 100">${ground}
+      <g class="rw-torso">
+        <!-- Hinged forward torso -->
+        <circle class="skin" cx="30" cy="32" r="7"/>
+        <rect class="skin" x="34" y="30" width="32" height="11" rx="4" transform="rotate(-12 50 36)"/>
+      </g>
+      <!-- Upper arms hanging -->
+      <rect class="skin" x="40" y="38" width="5" height="14" rx="2"/>
+      <rect class="skin" x="55" y="38" width="5" height="14" rx="2"/>
+      <!-- Forearms pulling barbell -->
+      <g class="rw-forearm-l">
+        <rect class="skin-d" x="40" y="50" width="5" height="14" rx="2"/>
+      </g>
+      <g class="rw-forearm-r">
+        <rect class="skin-d" x="55" y="50" width="5" height="14" rx="2"/>
+      </g>
+      <!-- Barbell -->
+      <g class="rw-bar">
+        <rect class="gear" x="32" y="62" width="36" height="3" rx="1"/>
+        <rect class="plate" x="26" y="56" width="6" height="14" rx="1"/>
+        <rect class="plate" x="68" y="56" width="6" height="14" rx="1"/>
+      </g>
+      <!-- Legs slightly bent -->
+      <rect class="skin-d" x="44" y="50" width="6" height="20" rx="2"/>
+      <rect class="skin-d" x="52" y="50" width="6" height="20" rx="2"/>
+      <rect class="skin-d" x="43" y="68" width="6" height="16" rx="2" transform="rotate(-8 46 76)"/>
+      <rect class="skin-d" x="53" y="68" width="6" height="16" rx="2" transform="rotate(-8 56 76)"/>
     </svg>`,
-    deadlift: `<svg class="ex-svg anim-deadlift" viewBox="0 0 60 60" fill="none">
-      <circle cx="30" cy="8" r="8" fill="#7CB518"/>
-      <rect x="22" y="18" width="16" height="18" rx="4" fill="#7CB518"/>
-      <rect x="10" y="26" width="14" height="7" rx="3" fill="#7CB518" transform="rotate(20 17 29)"/>
-      <rect x="36" y="26" width="14" height="7" rx="3" fill="#7CB518" transform="rotate(-20 43 29)"/>
-      <rect x="22" y="36" width="9" height="18" rx="3" fill="#5A8A0F"/>
-      <rect x="29" y="36" width="9" height="18" rx="3" fill="#5A8A0F"/>
-      <rect x="5" y="34" width="50" height="5" rx="2" fill="#E5E7EB"/>
+
+    deadlift: `<svg class="ex-svg" viewBox="0 0 100 100">${ground}
+      <g class="dl-torso">
+        <circle class="skin" cx="50" cy="18" r="7"/>
+        <rect class="skin" x="42" y="24" width="16" height="26" rx="4"/>
+      </g>
+      <!-- Arms going to bar -->
+      <g class="dl-arm-l">
+        <rect class="skin" x="37" y="28" width="5" height="36" rx="2"/>
+      </g>
+      <g class="dl-arm-r">
+        <rect class="skin" x="58" y="28" width="5" height="36" rx="2"/>
+      </g>
+      <!-- Legs (semi-bent) -->
+      <rect class="skin-d" x="43" y="50" width="6" height="20" rx="2"/>
+      <rect class="skin-d" x="51" y="50" width="6" height="20" rx="2"/>
+      <rect class="skin-d" x="43" y="68" width="6" height="16" rx="2"/>
+      <rect class="skin-d" x="51" y="68" width="6" height="16" rx="2"/>
+      <!-- Barbell -->
+      <g class="dl-bar">
+        <rect class="gear" x="14" y="64" width="72" height="3" rx="1"/>
+        <rect class="plate" x="6" y="58" width="8" height="16" rx="1"/>
+        <rect class="plate" x="86" y="58" width="8" height="16" rx="1"/>
+      </g>
     </svg>`
   };
   return svgs[anim] || svgs.squat;
@@ -764,7 +894,8 @@ function deleteWeight(idx) {
 
 // ===== CHAT SCREEN =====
 function renderChat() {
-  const hasKey = !!App.geminiKey;
+  const autoMode = Gemini.isAutoMode();
+  const hasKey = autoMode || !!App.geminiKey;
   document.getElementById('screen-chat').innerHTML = `
     <div class="chat-header-info">
       <span>🤖</span>
@@ -844,7 +975,7 @@ function renderMessages() {
 async function sendMessage() {
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
-  if (!text || !App.geminiKey) return;
+  if (!text || (!App.geminiKey && !Gemini.isAutoMode())) return;
   input.value = '';
   input.style.height = 'auto';
 

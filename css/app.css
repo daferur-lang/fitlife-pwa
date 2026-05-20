@@ -247,35 +247,84 @@ svg{display:block}
 .week-day-btn span:first-child{font-size:0.6rem;font-weight:600;color:var(--text-3);text-transform:uppercase}
 .week-day-btn span:last-child{font-size:0.65rem;font-weight:600;color:var(--text-2)}
 
-/* ===== EXERCISE SVG ANIMATIONS ===== */
-.ex-svg{width:54px;height:54px}
-/* Squat */
-@keyframes squat{0%,100%{transform:scaleY(1) translateY(0)}50%{transform:scaleY(0.8) translateY(5px)}}
-.anim-squat{animation:squat 1.5s ease-in-out infinite}
-/* Push-up */
-@keyframes pushup-body{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-.anim-pushup{animation:pushup-body 1.5s ease-in-out infinite}
-/* Curl */
-@keyframes curl-arm{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-60deg)}}
-.anim-curl{animation:curl-arm 1.2s ease-in-out infinite;transform-origin:bottom center}
-/* Run */
-@keyframes run-body{0%,100%{transform:translateX(0) rotate(0deg)}25%{transform:translateX(3px) rotate(3deg)}75%{transform:translateX(-3px) rotate(-3deg)}}
-.anim-run{animation:run-body 0.7s ease-in-out infinite}
-/* Plank */
-@keyframes plank-pulse{0%,100%{transform:scaleX(1)}50%{transform:scaleX(1.02)}}
-.anim-plank{animation:plank-pulse 2s ease-in-out infinite}
-/* Press */
-@keyframes press-up{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-.anim-press{animation:press-up 1.5s ease-in-out infinite}
-/* Jump */
-@keyframes jump{0%,100%{transform:translateY(0)}40%{transform:translateY(-12px)}}
-.anim-jump{animation:jump 1s ease-in-out infinite}
-/* Row */
-@keyframes row{0%,100%{transform:translateX(0)}50%{transform:translateX(6px)}}
-.anim-row{animation:row 1.3s ease-in-out infinite}
-/* Deadlift */
-@keyframes deadlift{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-6px) rotate(-5deg)}}
-.anim-deadlift{animation:deadlift 1.8s ease-in-out infinite}
+/* ===== EXERCISE SVG ANIMATIONS — Articulated figures ===== */
+.ex-svg{width:72px;height:72px;overflow:visible}
+.ex-svg .skin{fill:#7CB518}
+.ex-svg .skin-d{fill:#5A8A0F}
+.ex-svg .gear{fill:#2D3748}
+.ex-svg .plate{fill:#1F2937}
+.ex-svg .ground{stroke:#D1D5DB;stroke-width:1.5;stroke-linecap:round;stroke-dasharray:3 3}
+
+/* SQUAT — knee/hip flexion with barbell on shoulders */
+@keyframes sq-torso{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+@keyframes sq-thigh{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-25deg)}}
+@keyframes sq-shin{0%,100%{transform:rotate(0deg)}50%{transform:rotate(20deg)}}
+.sq-torso{animation:sq-torso 1.8s ease-in-out infinite;transform-origin:50px 50px}
+.sq-thigh-l{animation:sq-thigh 1.8s ease-in-out infinite;transform-origin:43px 56px}
+.sq-thigh-r{animation:sq-thigh 1.8s ease-in-out infinite;transform-origin:57px 56px}
+.sq-shin-l{animation:sq-shin 1.8s ease-in-out infinite;transform-origin:42px 72px}
+.sq-shin-r{animation:sq-shin 1.8s ease-in-out infinite;transform-origin:58px 72px}
+
+/* PUSH-UP — elbow flexion, body horizontal */
+@keyframes pu-body{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+@keyframes pu-arm{0%,100%{transform:rotate(0deg)}50%{transform:rotate(35deg)}}
+.pu-body{animation:pu-body 1.6s ease-in-out infinite}
+.pu-arm-l{animation:pu-arm 1.6s ease-in-out infinite;transform-origin:30px 50px}
+.pu-arm-r{animation:pu-arm 1.6s ease-in-out infinite;transform-origin:60px 50px}
+
+/* CURL — bicep curl, elbow stationary */
+@keyframes cu-forearm{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-110deg)}}
+.cu-forearm-l{animation:cu-forearm 1.4s ease-in-out infinite;transform-origin:32px 52px}
+.cu-forearm-r{animation:cu-forearm 1.4s ease-in-out infinite;transform-origin:68px 52px;animation-delay:.7s}
+
+/* RUN — alternating gait cycle */
+@keyframes ru-thigh-a{0%,100%{transform:rotate(-30deg)}50%{transform:rotate(30deg)}}
+@keyframes ru-thigh-b{0%,100%{transform:rotate(30deg)}50%{transform:rotate(-30deg)}}
+@keyframes ru-arm-a{0%,100%{transform:rotate(40deg)}50%{transform:rotate(-40deg)}}
+@keyframes ru-arm-b{0%,100%{transform:rotate(-40deg)}50%{transform:rotate(40deg)}}
+@keyframes ru-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.ru-body{animation:ru-bounce .5s ease-in-out infinite}
+.ru-thigh-l{animation:ru-thigh-a .8s ease-in-out infinite;transform-origin:50px 56px}
+.ru-thigh-r{animation:ru-thigh-b .8s ease-in-out infinite;transform-origin:50px 56px}
+.ru-arm-l{animation:ru-arm-a .8s ease-in-out infinite;transform-origin:50px 32px}
+.ru-arm-r{animation:ru-arm-b .8s ease-in-out infinite;transform-origin:50px 32px}
+
+/* PLANK — subtle breathing, holding isometric */
+@keyframes pl-breathe{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(-1.5px) scaleY(1.03)}}
+.pl-body{animation:pl-breathe 2.4s ease-in-out infinite;transform-origin:center}
+
+/* PRESS — shoulder press, arms extending overhead */
+@keyframes pr-arm{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+@keyframes pr-bar{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.pr-arm-l,.pr-arm-r,.pr-bar{animation:pr-arm 1.6s ease-in-out infinite}
+
+/* JUMP — squat & explode */
+@keyframes ju-body{0%{transform:translateY(0) scaleY(.9)}40%{transform:translateY(-18px) scaleY(1.05)}70%{transform:translateY(-8px) scaleY(1)}100%{transform:translateY(0) scaleY(.9)}}
+@keyframes ju-arm-l{0%,100%{transform:rotate(-40deg)}40%{transform:rotate(120deg)}}
+@keyframes ju-arm-r{0%,100%{transform:rotate(40deg)}40%{transform:rotate(-120deg)}}
+@keyframes ju-thigh{0%,100%{transform:rotate(-12deg)}40%{transform:rotate(0deg)}}
+.ju-body{animation:ju-body 1.2s cubic-bezier(.4,0,.2,1) infinite}
+.ju-arm-l{animation:ju-arm-l 1.2s cubic-bezier(.4,0,.2,1) infinite;transform-origin:50px 32px}
+.ju-arm-r{animation:ju-arm-r 1.2s cubic-bezier(.4,0,.2,1) infinite;transform-origin:50px 32px}
+.ju-thigh-l{animation:ju-thigh 1.2s cubic-bezier(.4,0,.2,1) infinite;transform-origin:46px 54px}
+.ju-thigh-r{animation:ju-thigh 1.2s cubic-bezier(.4,0,.2,1) infinite;transform-origin:54px 54px}
+
+/* ROW — pulling motion, elbows back */
+@keyframes rw-forearm{0%,100%{transform:rotate(20deg) translateX(0)}50%{transform:rotate(-30deg) translateX(-6px)}}
+@keyframes rw-bar{0%,100%{transform:translateX(0)}50%{transform:translateX(-10px)}}
+@keyframes rw-torso{0%,100%{transform:rotate(0deg)}50%{transform:rotate(3deg)}}
+.rw-torso{animation:rw-torso 1.4s ease-in-out infinite;transform-origin:50px 56px}
+.rw-forearm-l{animation:rw-forearm 1.4s ease-in-out infinite;transform-origin:42px 40px}
+.rw-forearm-r{animation:rw-forearm 1.4s ease-in-out infinite;transform-origin:58px 40px}
+.rw-bar{animation:rw-bar 1.4s ease-in-out infinite}
+
+/* DEADLIFT — hip hinge, barbell from floor to standing */
+@keyframes dl-torso{0%,100%{transform:translateY(8px) rotate(35deg)}50%{transform:translateY(0) rotate(0deg)}}
+@keyframes dl-bar{0%,100%{transform:translateY(18px)}50%{transform:translateY(0)}}
+@keyframes dl-arm{0%,100%{transform:translateY(18px)}50%{transform:translateY(0)}}
+.dl-torso{animation:dl-torso 2s ease-in-out infinite;transform-origin:50px 60px}
+.dl-bar{animation:dl-bar 2s ease-in-out infinite}
+.dl-arm-l,.dl-arm-r{animation:dl-arm 2s ease-in-out infinite}
 
 /* ===== TRACK SCREEN ===== */
 .track-hero{background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:var(--r-lg);padding:22px;color:#fff;margin-bottom:20px;position:relative;overflow:hidden}

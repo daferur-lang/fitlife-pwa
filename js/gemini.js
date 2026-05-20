@@ -1,5 +1,13 @@
 const Gemini = {
-  API_URL: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+  // 🌐 Cuando despliegues el Worker, pega aquí su URL (ej: https://fitlife.tuusuario.workers.dev)
+  // Mientras esté vacío, la app pedirá la API key al usuario como fallback.
+  PROXY_URL: '',
+
+  DIRECT_URL: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+
+  isAutoMode() {
+    return !!this.PROXY_URL;
+  },
 
   buildSystemPrompt(user) {
     const dietNames = { keto:'Keto', mediterranean:'Mediterránea', intermittent_fasting:'Ayuno Intermitente 16:8', dash:'DASH', plant_based:'Plant-Based' };
@@ -26,7 +34,6 @@ REGLAS DE RESPUESTA:
     const systemPrompt = this.buildSystemPrompt(user);
     const contents = [];
 
-    // Include last 10 messages for context
     const recentHistory = history.slice(-10);
     for (const msg of recentHistory) {
       contents.push({ role: msg.role === 'ai' ? 'model' : 'user', parts: [{ text: msg.text }] });
@@ -39,7 +46,10 @@ REGLAS DE RESPUESTA:
       generationConfig: { temperature: 0.8, maxOutputTokens: 800, topP: 0.9 }
     };
 
-    const res = await fetch(`${this.API_URL}?key=${apiKey}`, {
+    // Use proxy if configured (no key needed from user), else fall back to direct call
+    const endpoint = this.PROXY_URL || `${this.DIRECT_URL}?key=${apiKey}`;
+
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
@@ -48,7 +58,7 @@ REGLAS DE RESPUESTA:
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       const msg = err?.error?.message || `Error ${res.status}`;
-      if (res.status === 400) throw new Error('API key inválida. Verifica tu clave en Ajustes.');
+      if (res.status === 400 && !this.PROXY_URL) throw new Error('API key inválida. Verifica tu clave en Ajustes.');
       if (res.status === 429) throw new Error('Límite de peticiones alcanzado. Espera un momento.');
       throw new Error(msg);
     }
