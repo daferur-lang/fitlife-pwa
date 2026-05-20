@@ -1,7 +1,7 @@
 const Gemini = {
   // 🌐 Cuando despliegues el Worker, pega aquí su URL (ej: https://fitlife.tuusuario.workers.dev)
   // Mientras esté vacío, la app pedirá la API key al usuario como fallback.
-  PROXY_URL: '',
+  PROXY_URL: 'https://fitlife.daferur.workers.dev',
 
   DIRECT_URL: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
 
