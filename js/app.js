@@ -41,10 +41,7 @@ function showOnboarding() {
 
 function renderObStep(step) {
   App.ob.step = step;
-  const steps = document.querySelectorAll('.ob-step');
-  steps.forEach((s, i) => {
-    s.style.transform = `translateX(${(i - (step - 1)) * 100}%)`;
-  });
+  document.querySelector('.ob-steps').style.transform = `translateX(-${(step - 1) * 20}%)`;
   document.querySelector('.ob-progress-bar').style.width = `${(step / 5) * 100}%`;
 }
 
