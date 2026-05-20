@@ -502,6 +502,24 @@ function renderWeekOverview(plan, days, todayIdx) {
 }
 
 function renderExerciseSVG(anim) {
+  // Real exercise GIFs from Wikimedia Commons (public domain)
+  const GIFS = {
+    squat:    'https://upload.wikimedia.org/wikipedia/commons/e/e6/Squats.gif',
+    pushup:   'https://upload.wikimedia.org/wikipedia/commons/8/8f/Pushups.gif',
+    jump:     'https://upload.wikimedia.org/wikipedia/commons/a/ac/Jumpingjacks.gif',
+    run:      'https://upload.wikimedia.org/wikipedia/commons/d/df/Man_Jogging_GIF_Animation_Loop.gif',
+    curl:     'https://upload.wikimedia.org/wikipedia/commons/6/68/Man_Lifting_Dumbbells_GIF_Animation_Loop.gif',
+    deadlift: 'https://upload.wikimedia.org/wikipedia/commons/c/cb/Man_Lifting_Barbell_Deadlift_GIF_Animation_Loop.gif',
+    press:    'https://upload.wikimedia.org/wikipedia/commons/6/68/Man_Lifting_Dumbbells_GIF_Animation_Loop.gif',
+    row:      'https://upload.wikimedia.org/wikipedia/commons/c/cb/Man_Lifting_Barbell_Deadlift_GIF_Animation_Loop.gif',
+    plank:    'https://upload.wikimedia.org/wikipedia/commons/8/8f/Pushups.gif'
+  };
+
+  const gifUrl = GIFS[anim] || GIFS.squat;
+  return `<img class="ex-gif" src="${gifUrl}" alt="Demostración del ejercicio" loading="lazy" onerror="this.outerHTML='${renderFallbackSVG(anim).replace(/'/g, "\\'")}'"/>`;
+}
+
+function renderFallbackSVG(anim) {
   const ground = `<line class="ground" x1="8" y1="88" x2="92" y2="88"/>`;
   const svgs = {
     squat: `<svg class="ex-svg" viewBox="0 0 100 100">${ground}

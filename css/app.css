@@ -247,7 +247,10 @@ svg{display:block}
 .week-day-btn span:first-child{font-size:0.6rem;font-weight:600;color:var(--text-3);text-transform:uppercase}
 .week-day-btn span:last-child{font-size:0.65rem;font-weight:600;color:var(--text-2)}
 
-/* ===== EXERCISE SVG ANIMATIONS — Articulated figures ===== */
+/* ===== EXERCISE ANIMATIONS — Real GIFs (Wikimedia Commons, public domain) ===== */
+.ex-gif{width:88px;height:88px;border-radius:12px;background:#F8FAFC;object-fit:cover;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+
+/* ===== EXERCISE SVG ANIMATIONS — Fallback articulated figures ===== */
 .ex-svg{width:72px;height:72px;overflow:visible}
 .ex-svg .skin{fill:#7CB518}
 .ex-svg .skin-d{fill:#5A8A0F}
