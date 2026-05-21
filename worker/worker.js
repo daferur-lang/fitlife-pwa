@@ -1,14 +1,13 @@
 /**
- * FitLife — Cloudflare Worker proxy for Hugging Face Inference API
- * Model: mistralai/Mistral-7B-Instruct-v0.3 (free, no credit card)
+ * FitLife — Cloudflare Worker proxy for Groq API
+ * Model: llama-3.1-8b-instant — gratis, rapidísimo, sin tarjeta
+ * Free tier: 14.400 peticiones/día
  *
- * Secrets needed in Cloudflare (Settings → Variables → Secrets):
- *   HF_TOKEN       → tu token de Hugging Face (hf_...)
- *   ALLOWED_ORIGIN → https://daferur-lang.github.io
+ * Para obtener GROQ_KEY gratis: https://console.groq.com
  */
 
-const HF_MODEL = 'mistralai/Mistral-7B-Instruct-v0.3';
-const HF_URL   = `https://api-inference.huggingface.co/models/${HF_MODEL}/v1/chat/completions`;
+const GROQ_URL   = 'https://api.groq.com/openai/v1/chat/completions';
+const GROQ_MODEL = 'llama-3.1-8b-instant';
 
 export default {
   async fetch(request, env) {
@@ -24,62 +23,52 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
     if (request.method !== 'POST')
       return new Response('Method not allowed', { status: 405, headers: cors });
-    if (!env.HF_TOKEN)
+    if (!env.GROQ_KEY)
       return new Response(JSON.stringify({ error: 'Server not configured' }),
         { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } });
 
     try {
       const body = await request.json();
 
-      // Convert Gemini-style body to OpenAI-compatible (HF uses this format)
+      // Convert Gemini-style body → OpenAI format (Groq is OpenAI-compatible)
       const messages = [];
-
-      // System instruction → system message
-      if (body.system_instruction?.parts?.[0]?.text) {
+      if (body.system_instruction?.parts?.[0]?.text)
         messages.push({ role: 'system', content: body.system_instruction.parts[0].text });
-      }
 
-      // Contents array → messages
-      for (const c of (body.contents || [])) {
-        messages.push({
-          role   : c.role === 'model' ? 'assistant' : 'user',
-          content: c.parts?.[0]?.text || ''
-        });
-      }
+      for (const c of (body.contents || []))
+        messages.push({ role: c.role === 'model' ? 'assistant' : 'user', content: c.parts?.[0]?.text || '' });
 
-      const hfBody = {
-        model      : HF_MODEL,
-        messages,
-        max_tokens : body.generationConfig?.maxOutputTokens || 800,
-        temperature: body.generationConfig?.temperature     || 0.8,
-        stream     : false,
-      };
-
-      const res = await fetch(HF_URL, {
+      const res = await fetch(GROQ_URL, {
         method : 'POST',
-        headers: {
-          'Content-Type' : 'application/json',
-          'Authorization': `Bearer ${env.HF_TOKEN}`,
-        },
-        body: JSON.stringify(hfBody),
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${env.GROQ_KEY}` },
+        body   : JSON.stringify({
+          model      : GROQ_MODEL,
+          messages,
+          max_tokens : body.generationConfig?.maxOutputTokens || 800,
+          temperature: body.generationConfig?.temperature     || 0.8,
+        }),
       });
 
-      const data = await res.json();
+      const rawText = await res.text();
+      let data;
+      try { data = JSON.parse(rawText); } catch {
+        return ok(cors, '⚠️ Error de conexión con la IA. Intenta de nuevo.');
+      }
 
-      // Normalize response to Gemini format so gemini.js doesn't need changes
-      const text = data?.choices?.[0]?.message?.content || 'No pude generar una respuesta. Intenta de nuevo.';
-      const normalized = {
-        candidates: [{ content: { parts: [{ text }] } }]
-      };
+      if (data?.error) return ok(cors, `⚠️ ${data.error?.message || data.error}`);
 
-      return new Response(JSON.stringify(normalized), {
-        status : res.ok ? 200 : res.status,
-        headers: { ...cors, 'Content-Type': 'application/json' },
-      });
+      const text = data?.choices?.[0]?.message?.content || 'No pude generar una respuesta.';
+      return ok(cors, text);
 
     } catch (e) {
-      return new Response(JSON.stringify({ error: e.message }),
-        { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } });
+      return ok(cors, `❌ Error: ${e.message}`);
     }
   }
 };
+
+function ok(cors, text) {
+  return new Response(
+    JSON.stringify({ candidates: [{ content: { parts: [{ text }] } }] }),
+    { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } }
+  );
+}
