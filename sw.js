@@ -1,7 +1,7 @@
-const CACHE = 'fitlife-v5';
+const CACHE = 'fitlife-v6';
 const ASSETS = [
   './', './index.html', './css/app.css',
-  './js/storage.js', './js/gemini.js', './js/data.js', './js/app.js',
+  './js/storage.js', './js/gemini.js', './js/strava.js', './js/data.js', './js/app.js',
   './manifest.json', './icons/icon.svg',
   'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'
