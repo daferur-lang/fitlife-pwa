@@ -7,7 +7,7 @@ const App = {
 };
 
 // ===== INIT =====
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   App.user = Storage.get('user');
   App.geminiKey = Storage.get('geminiKey');
   App.weightLog = Storage.get('weightLog') || [];
@@ -23,12 +23,18 @@ document.addEventListener('DOMContentLoaded', () => {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 
+  // Handle Strava OAuth callback (?code=... in URL) before showing the app
+  const stravaConnected = await Strava.handleCallback();
+
   setTimeout(() => {
     document.getElementById('splash').classList.add('fade-out');
     setTimeout(() => {
       document.getElementById('splash').style.display = 'none';
       if (!App.user) showOnboarding();
-      else { document.getElementById('app').classList.remove('hidden'); navigate('dashboard'); }
+      else {
+        document.getElementById('app').classList.remove('hidden');
+        navigate(stravaConnected ? 'track' : 'dashboard');
+      }
     }, 500);
   }, 1800);
 });
@@ -857,8 +863,121 @@ function renderTrack() {
           }).join('')}
       </div>
     </div>
+    <div id="strava-section"></div>
   `;
   initWeightChart();
+  loadStravaSection();
+}
+
+// ===== STRAVA SECTION (async, rendered after track screen) =====
+async function loadStravaSection() {
+  const el = document.getElementById('strava-section');
+  if (!el) return;
+
+  if (!Strava.isConnected) {
+    el.innerHTML = `
+      <div class="card" style="text-align:center;padding:24px 20px">
+        <div style="font-size:2rem;margin-bottom:8px">🚴</div>
+        <h3 style="margin:0 0 6px;font-size:1rem">Conecta Strava</h3>
+        <p style="margin:0 0 16px;font-size:0.82rem;color:var(--text-3);line-height:1.5">
+          Importa tus actividades y estadísticas directamente desde Strava.
+        </p>
+        <button onclick="Strava.authorize()" style="width:100%;padding:13px;background:#FC4C02;color:#fff;border:none;border-radius:12px;font-size:0.88rem;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+          Conectar con Strava
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  // Show loading state
+  el.innerHTML = `<div class="card" style="text-align:center;padding:24px;color:var(--text-3);font-size:0.85rem">Cargando actividades de Strava…</div>`;
+
+  try {
+    const activities = await Strava.getActivities(10);
+    const rl = Strava.getRateLimitStatus();
+    const athlete = Strava.athlete;
+
+    const rateLimitBar = rl.shortPct >= 70 ? `
+      <div style="margin-bottom:12px;padding:10px 14px;background:${rl.shortPct >= 90 ? '#FEF2F2' : '#FFF7ED'};border-radius:10px;font-size:0.78rem;color:${rl.shortPct >= 90 ? '#B91C1C' : '#92400E'}">
+        <strong>⚠️ Límite API Strava:</strong> ${rl.shortUsage}/${rl.shortLimit} peticiones (15 min) — ${rl.dailyUsage}/${rl.dailyLimit} hoy.
+        Reset en ${Math.ceil(rl.secsUntilReset / 60)} min.
+      </div>` : '';
+
+    const actHTML = activities.length === 0
+      ? '<p style="text-align:center;color:var(--text-3);font-size:0.85rem;padding:16px">Sin actividades recientes</p>'
+      : activities.map(act => {
+          const f = Strava.formatActivity(act);
+          return `
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">
+              <div style="font-size:1.6rem;flex-shrink:0">${f.icon}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:0.88rem;font-weight:600;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+                <div style="font-size:0.75rem;color:var(--text-3);margin-top:2px">${f.date}</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0;font-size:0.78rem;color:var(--text-2);line-height:1.7">
+                ${f.dist ? `<div>${f.dist}</div>` : ''}
+                ${f.time ? `<div>${f.time}</div>` : ''}
+                ${f.elev ? `<div style="color:#64748B">${f.elev}</div>` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+    el.innerHTML = `
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="#FC4C02"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+            <span style="font-weight:700;font-size:1rem">Strava</span>
+            ${athlete ? `<span style="font-size:0.78rem;color:var(--text-3)">${athlete.firstname || ''}</span>` : ''}
+          </div>
+          <button onclick="disconnectStrava()" style="font-size:0.72rem;color:#94A3B8;background:none;border:1px solid #E2E8F0;border-radius:8px;padding:4px 10px;cursor:pointer;font-family:Poppins,sans-serif">
+            Desconectar
+          </button>
+        </div>
+        ${rateLimitBar}
+        <div class="section-title" style="margin-bottom:4px">Últimas actividades</div>
+        ${actHTML}
+      </div>
+    `;
+  } catch (e) {
+    if (e.code === 'RATE_LIMITED') {
+      const mins = Math.ceil(e.secsUntilReset / 60);
+      el.innerHTML = `
+        <div class="card" style="text-align:center;padding:20px">
+          <div style="font-size:1.8rem;margin-bottom:8px">⏱️</div>
+          <h4 style="margin:0 0 6px;color:#F97316">Límite de peticiones Strava</h4>
+          <p style="margin:0;font-size:0.82rem;color:var(--text-3)">Se restablece en <strong>${mins} min</strong>.</p>
+        </div>`;
+    } else if (e.code === 'ATHLETE_CAPACITY') {
+      el.innerHTML = `
+        <div class="card" style="text-align:center;padding:20px">
+          <div style="font-size:1.8rem;margin-bottom:8px">🚫</div>
+          <h4 style="margin:0 0 6px;color:#EF4444">Capacidad de atletas superada</h4>
+          <p style="margin:0 0 12px;font-size:0.82rem;color:var(--text-3)">Tu app está en Single Player Mode.</p>
+          <button onclick="Strava._showAthleteCapacityModal()" style="font-size:0.82rem;background:#FC4C02;color:#fff;border:none;border-radius:10px;padding:10px 18px;cursor:pointer;font-family:Poppins,sans-serif">
+            Ver solución
+          </button>
+        </div>`;
+    } else if (e.code === 'UNAUTHENTICATED') {
+      el.innerHTML = `
+        <div class="card" style="text-align:center;padding:20px">
+          <p style="margin:0 0 12px;font-size:0.85rem;color:var(--text-3)">Sesión de Strava expirada.</p>
+          <button onclick="Strava.authorize()" style="background:#FC4C02;color:#fff;border:none;border-radius:10px;padding:11px 20px;font-size:0.85rem;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif">
+            Volver a conectar
+          </button>
+        </div>`;
+    } else {
+      el.innerHTML = `<div class="card" style="text-align:center;padding:20px;color:var(--text-3);font-size:0.82rem">Error al cargar Strava: ${e.message}</div>`;
+    }
+  }
+}
+
+function disconnectStrava() {
+  Strava.disconnect();
+  loadStravaSection();
 }
 
 function initWeightChart() {
@@ -1084,6 +1203,16 @@ function showSettings() {
             <div class="toggle-knob"></div>
           </div>
         </div>
+        <div class="settings-item" onclick="handleStravaSettings()">
+          <div class="settings-icon">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="#FC4C02"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+          </div>
+          <div class="settings-text">
+            <h4>Strava</h4>
+            <p>${Strava.isConnected ? `Conectado como ${Strava.athlete?.firstname || 'Atleta'}` : 'No conectado'}</p>
+          </div>
+          <div class="settings-arrow">›</div>
+        </div>
         <button class="danger-btn" onclick="confirmReset()">🗑️ Resetear app</button>
       </div>
     </div>
@@ -1148,6 +1277,18 @@ function toggleNotifications(el) {
       if (perm === 'granted') showToast('🔔 Notificaciones activadas');
       else { el.classList.remove('on'); Storage.set('notifEnabled', false); showToast('Permiso denegado', 'error'); }
     });
+  }
+}
+
+function handleStravaSettings() {
+  closeSettings();
+  if (Strava.isConnected) {
+    if (confirm(`¿Desconectar Strava? (${Strava.athlete?.firstname || 'Atleta'})`)) {
+      Strava.disconnect();
+      navigate('track');
+    }
+  } else {
+    Strava.authorize();
   }
 }
 
