@@ -8,6 +8,7 @@ const App = {
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
+  applyTheme(Storage.get('theme') || 'light');
   App.user = Storage.get('user');
   App.geminiKey = Storage.get('geminiKey');
   App.weightLog = Storage.get('weightLog') || [];
@@ -121,6 +122,28 @@ function renderScreen(screen) {
   else if (screen === 'track') renderTrack();
   else if (screen === 'chat') renderChat();
 }
+
+// ===== TEMA (claro / oscuro) =====
+function isDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
+
+function applyTheme(theme) {
+  const dark = theme === 'dark';
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', dark ? '#12121c' : '#1A1A2E');
+}
+
+function toggleTheme(el) {
+  const dark = !(Storage.get('theme') === 'dark');
+  Storage.set('theme', dark ? 'dark' : 'light');
+  applyTheme(dark ? 'dark' : 'light');
+  if (el) el.classList.toggle('on', dark);
+  if (App.currentScreen) renderScreen(App.currentScreen); // refresca gráficas con los colores del tema
+}
+
+// Colores de gráficas según tema
+function chartGrid() { return isDark() ? 'rgba(255,255,255,0.08)' : '#F3F4F6'; }
+function chartTick() { return isDark() ? '#C2C6D2' : '#6B7280'; }
 
 // ===== DASHBOARD =====
 function renderDashboard() {
@@ -935,8 +958,8 @@ function initRunChart() {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.raw} km` } } },
       scales: {
-        y: { beginAtZero: true, grid: { color: '#F3F4F6' }, ticks: { font: { family: 'Poppins', size: 11 }, callback: v => v + 'km' } },
-        x: { grid: { display: false }, ticks: { font: { family: 'Poppins', size: 10 } } }
+        y: { beginAtZero: true, grid: { color: chartGrid() }, ticks: { color: chartTick(), font: { family: 'Poppins', size: 11 }, callback: v => v + 'km' } },
+        x: { grid: { display: false }, ticks: { color: chartTick(), font: { family: 'Poppins', size: 10 } } }
       }
     }
   });
@@ -1102,8 +1125,8 @@ function initWeightChart() {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.raw} kg` } } },
       scales: {
-        y: { grid: { color: '#F3F4F6' }, ticks: { font: { family: 'Poppins', size: 11 }, callback: v => v + 'kg' } },
-        x: { grid: { display: false }, ticks: { font: { family: 'Poppins', size: 10 } } }
+        y: { grid: { color: chartGrid() }, ticks: { color: chartTick(), font: { family: 'Poppins', size: 11 }, callback: v => v + 'kg' } },
+        x: { grid: { display: false }, ticks: { color: chartTick(), font: { family: 'Poppins', size: 10 } } }
       }
     }
   });
@@ -1280,6 +1303,7 @@ function showSettings() {
   const u = App.user;
   const rem = Reminders.get();
   const remOn = rem.enabled && ('Notification' in window) && Notification.permission === 'granted';
+  const darkOn = Storage.get('theme') === 'dark';
   modal.innerHTML = `
     <div class="modal-overlay" onclick="closeSettings()">
       <div class="modal-sheet" onclick="event.stopPropagation()">
@@ -1309,6 +1333,13 @@ function showSettings() {
           <div class="settings-icon">🔔</div>
           <div class="settings-text"><h4>Recordatorios</h4><p>${remOn ? '✓ Activados' : 'Desactivados'}</p></div>
           <div class="settings-arrow">›</div>
+        </div>
+        <div class="settings-item">
+          <div class="settings-icon">🌙</div>
+          <div class="settings-text"><h4>Modo oscuro</h4><p>Tema de la aplicación</p></div>
+          <div class="toggle-switch ${darkOn ? 'on' : ''}" onclick="toggleTheme(this)">
+            <div class="toggle-knob"></div>
+          </div>
         </div>
         <button class="danger-btn" onclick="confirmReset()">🗑️ Resetear app</button>
       </div>

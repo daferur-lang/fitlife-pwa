@@ -1,4 +1,4 @@
-const CACHE = 'fitlife-v8';
+const CACHE = 'fitlife-v9';
 const ASSETS = [
   './', './index.html', './css/app.css',
   './js/storage.js', './js/gemini.js', './js/data.js', './js/reminders.js', './js/voice.js', './js/app.js',

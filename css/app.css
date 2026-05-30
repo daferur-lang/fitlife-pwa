@@ -465,3 +465,25 @@ svg{display:block}
 @keyframes mic-pulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.5)}50%{box-shadow:0 0 0 8px rgba(239,68,68,0)}}
 .voice-toggle{background:none;border:none;cursor:pointer;font-size:1.1rem;flex-shrink:0;padding:2px 4px;border-radius:8px;transition:var(--t)}
 .voice-toggle:hover{background:rgba(124,181,24,0.12)}
+
+/* ===== MODO OSCURO ===== */
+html[data-theme="dark"]{
+  --bg:#12121c;
+  --surface:#1e1e2e;
+  --dark:#2d2d44;
+  --text:#F1F3F8;
+  --text-2:#C2C6D2;
+  --text-3:#8A8FA3;
+  --border:#2f2f44;
+  --primary-ultra:rgba(124,181,24,0.12);
+  --primary-light:rgba(124,181,24,0.20);
+  --sh:0 2px 12px rgba(0,0,0,0.40);
+  --sh-lg:0 8px 32px rgba(0,0,0,0.55);
+}
+body{transition:background .25s ease,color .25s ease}
+html[data-theme="dark"] .chat-header-info{color:var(--primary)}
+html[data-theme="dark"] .ex-gif{background:#0f0f17}
+html[data-theme="dark"] .run-field input,
+html[data-theme="dark"] .weight-input,
+html[data-theme="dark"] .chat-textarea,
+html[data-theme="dark"] .api-input{background:#16161f}
