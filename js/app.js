@@ -1,6 +1,6 @@
 // ===== STATE =====
 const App = {
-  user: null, geminiKey: null, weightLog: [], chatHistory: [],
+  user: null, geminiKey: null, weightLog: [], chatHistory: [], runLog: [],
   mealsEaten: {}, exercisesDone: {}, currentScreen: 'dashboard',
   fastingActive: false, fastingStart: null, fastingInterval: null,
   weightChart: null, ob: { step: 1, data: {} }
@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   App.geminiKey = Storage.get('geminiKey');
   App.weightLog = Storage.get('weightLog') || [];
   App.chatHistory = Storage.get('chatHistory') || [];
+  App.runLog = Storage.get('runLog') || [];
   App.fastingActive = Storage.get('fastingActive') || false;
   App.fastingStart = Storage.get('fastingStart') || null;
 
@@ -22,6 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
+
+  Reminders.init();
 
   setTimeout(() => {
     document.getElementById('splash').classList.add('fade-out');
@@ -98,6 +101,9 @@ function finishOnboarding() {
 
 // ===== NAVIGATION =====
 function navigate(screen) {
+  if (App.currentScreen === 'chat' && screen !== 'chat' && typeof Voice !== 'undefined') {
+    Voice.stopSpeaking(); Voice.stopMic();
+  }
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('screen-' + screen).classList.add('active');
@@ -131,7 +137,9 @@ function renderDashboard() {
   const pct = totalToLose > 0 ? Math.min(100, Math.round((lost / totalToLose) * 100)) : 0;
   const daysSince = Math.floor((Date.now() - new Date(u.startDate)) / 86400000);
   const totalWorkouts = Storage.get('totalWorkouts') || 0;
-  const todayWorkout = Data.getTodayWorkout(u);
+  const isOutdoor = u.equipment === 'outdoor';
+  const todayWorkout = isOutdoor ? null : Data.getTodayWorkout(u);
+  const todayRunKm = isOutdoor ? Data.runFilter(App.runLog, 'day').reduce((a, s) => a + (s.km || 0), 0) : 0;
 
   // Calories eaten today from meals
   const mealData = todayMeals?.meals || {};
@@ -197,9 +205,9 @@ function renderDashboard() {
         <div class="dash-mini-val">8<span style="font-size:0.7rem;font-weight:500;color:var(--text-3)"> vasos</span></div>
         <div class="dash-mini-label">Agua diaria</div>
       </div>
-      <div class="dash-mini-card">
-        <div class="dash-mini-icon" style="background:#F5F3FF">${todayWorkout?.isRest ? '😴' : '💪'}</div>
-        <div class="dash-mini-val" style="font-size:0.85rem;line-height:1.2">${todayWorkout?.focus || 'Descanso'}</div>
+      <div class="dash-mini-card" onclick="navigate('workout')" style="cursor:pointer">
+        <div class="dash-mini-icon" style="background:#F5F3FF">${isOutdoor ? '🏃' : (todayWorkout?.isRest ? '😴' : '💪')}</div>
+        <div class="dash-mini-val" style="font-size:0.85rem;line-height:1.2">${isOutdoor ? todayRunKm.toFixed(1) + ' km' : (todayWorkout?.focus || 'Descanso')}</div>
         <div class="dash-mini-label">Entreno hoy</div>
       </div>
     </div>
@@ -426,6 +434,7 @@ function toggleMeal(mealId, btn) {
 
 // ===== WORKOUT SCREEN =====
 function renderWorkout() {
+  if (App.user.equipment === 'outdoor') { renderRunScreen(); return; }
   const workout = Data.getTodayWorkout(App.user);
   const plan = Data.WORKOUTS[App.user.equipment] || Data.WORKOUTS.home;
   const days = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
@@ -765,6 +774,214 @@ function showDayDetail(idx) {
   showToast(`${days[idx]}: ${w.focus} ${w.icon}`);
 }
 
+// ===== CORRER / ANDAR (pantalla cardio) =====
+let runTab = 'day';
+let runType = 'run';
+let runChart = null;
+
+function fmtPace(p) {
+  if (!p || p <= 0) return '--';
+  const m = Math.floor(p);
+  const s = Math.round((p - m) * 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+function fmtDur(min) {
+  min = Math.round(min || 0);
+  const h = Math.floor(min / 60), m = min % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+function renderRunScreen() {
+  document.getElementById('screen-workout').innerHTML = `
+    <div class="run-form card">
+      <h3 style="margin-bottom:14px">🏃 Registrar sesión</h3>
+      <div class="run-type-toggle">
+        <button class="run-type-btn ${runType === 'run' ? 'active' : ''}" onclick="selectRunType('run', this)">🏃 Correr</button>
+        <button class="run-type-btn ${runType === 'walk' ? 'active' : ''}" onclick="selectRunType('walk', this)">🚶 Andar</button>
+      </div>
+      <div class="run-inputs">
+        <div class="run-field">
+          <label>Distancia</label>
+          <input type="number" id="run-km" step="0.1" min="0.1" max="200" placeholder="km" inputmode="decimal">
+        </div>
+        <div class="run-field">
+          <label>Tiempo</label>
+          <input type="number" id="run-min" step="1" min="1" max="1440" placeholder="min" inputmode="numeric">
+        </div>
+      </div>
+      <button class="ob-btn" onclick="addRunSession()">Guardar sesión</button>
+    </div>
+
+    <div class="diet-tabs">
+      <button class="diet-tab ${runTab === 'day' ? 'active' : ''}" onclick="switchRunTab('day')">Hoy</button>
+      <button class="diet-tab ${runTab === 'week' ? 'active' : ''}" onclick="switchRunTab('week')">Semana</button>
+      <button class="diet-tab ${runTab === 'month' ? 'active' : ''}" onclick="switchRunTab('month')">Mes</button>
+    </div>
+    <div id="run-content"></div>
+  `;
+  renderRunContent();
+}
+
+function selectRunType(type, el) {
+  runType = type;
+  document.querySelectorAll('.run-type-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function switchRunTab(tab) {
+  runTab = tab;
+  document.querySelectorAll('#screen-workout .diet-tab').forEach(t => t.classList.remove('active'));
+  if (event && event.target) event.target.classList.add('active');
+  renderRunContent();
+}
+
+function renderRunContent() {
+  const container = document.getElementById('run-content');
+  if (!container) return;
+
+  if (!App.runLog.length) {
+    container.innerHTML = `
+      <div class="rest-day-card">
+        <div class="icon">🏃‍♀️</div>
+        <h3>¡Tu primer paso empieza aquí!</h3>
+        <p>Registra tu primera caminata o carrera arriba y empieza a ver tu progreso, récords y estadísticas.</p>
+      </div>`;
+    return;
+  }
+
+  const sessions = Data.runFilter(App.runLog, runTab);
+  const t = Data.runTotals(sessions);
+  const rec = Data.runRecords(App.runLog);
+  const avgKmh = t.minutes > 0 ? (t.km / (t.minutes / 60)) : 0;
+
+  container.innerHTML = `
+    <div class="run-stats-grid">
+      <div class="run-stat"><div class="run-stat-val">${t.count}</div><div class="run-stat-lbl">Sesiones</div></div>
+      <div class="run-stat"><div class="run-stat-val">${t.km.toFixed(1)}</div><div class="run-stat-lbl">km</div></div>
+      <div class="run-stat"><div class="run-stat-val">${fmtDur(t.minutes)}</div><div class="run-stat-lbl">Tiempo</div></div>
+      <div class="run-stat"><div class="run-stat-val">${fmtPace(t.pace)}</div><div class="run-stat-lbl">min/km</div></div>
+      <div class="run-stat"><div class="run-stat-val">${avgKmh.toFixed(1)}</div><div class="run-stat-lbl">km/h</div></div>
+      <div class="run-stat"><div class="run-stat-val">${t.kcal}</div><div class="run-stat-lbl">kcal</div></div>
+    </div>
+
+    <div class="section-title">🏆 Tus récords</div>
+    <div class="run-records">
+      <div class="record-card"><span class="record-emoji">📏</span><div><div class="record-val">${rec.longestKm.toFixed(1)} km</div><div class="record-lbl">Más larga</div></div></div>
+      <div class="record-card"><span class="record-emoji">⚡</span><div><div class="record-val">${fmtPace(rec.bestPace)}</div><div class="record-lbl">Mejor ritmo</div></div></div>
+      <div class="record-card"><span class="record-emoji">🔥</span><div><div class="record-val">${rec.streak} ${rec.streak === 1 ? 'día' : 'días'}</div><div class="record-lbl">Racha</div></div></div>
+      <div class="record-card"><span class="record-emoji">📅</span><div><div class="record-val">${rec.bestWeekKm.toFixed(1)} km</div><div class="record-lbl">Mejor semana</div></div></div>
+    </div>
+
+    <div class="chart-card">
+      <h3>📈 ${runTab === 'day' ? 'Sesiones de hoy' : runTab === 'week' ? 'Esta semana' : 'Este mes'}</h3>
+      <div class="chart-wrap"><canvas id="runChart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title" style="margin-bottom:12px">Historial</div>
+      <div class="run-history-list">
+        ${[...App.runLog].reverse().slice(0, 15).map(s => `
+          <div class="log-item">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:1.3rem">${s.type === 'walk' ? '🚶' : '🏃'}</span>
+              <div>
+                <div class="log-date">${s.km.toFixed(1)} km · ${fmtDur(s.minutes)}</div>
+                <div class="text-xs text-muted">${new Date(s.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} · ${fmtPace(s.pace)} min/km · ${s.kcal} kcal</div>
+              </div>
+            </div>
+            <span class="log-delete" onclick="deleteRunSession('${s.id}')">✕</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+  initRunChart();
+}
+
+function initRunChart() {
+  const canvas = document.getElementById('runChart');
+  if (!canvas) return;
+  if (runChart) { runChart.destroy(); runChart = null; }
+
+  let labels = [], data = [];
+  if (runTab === 'day') {
+    const today = Data.runFilter(App.runLog, 'day');
+    labels = today.map(s => new Date(s.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }));
+    data = today.map(s => +s.km.toFixed(1));
+  } else if (runTab === 'week') {
+    labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    const start = Data.runRangeStart('week');
+    data = Array(7).fill(0);
+    Data.runFilter(App.runLog, 'week').forEach(s => {
+      const idx = Math.floor((new Date(s.date) - start) / 86400000);
+      if (idx >= 0 && idx < 7) data[idx] += s.km;
+    });
+    data = data.map(v => +v.toFixed(1));
+  } else {
+    const start = Data.runRangeStart('month');
+    const buckets = {};
+    Data.runFilter(App.runLog, 'month').forEach(s => {
+      const wk = Math.floor((new Date(s.date).getDate() - 1) / 7);
+      buckets[wk] = (buckets[wk] || 0) + s.km;
+    });
+    const maxWk = Math.max(3, ...Object.keys(buckets).map(Number));
+    for (let i = 0; i <= maxWk; i++) { labels.push('Sem ' + (i + 1)); data.push(+(buckets[i] || 0).toFixed(1)); }
+  }
+
+  runChart = new Chart(canvas, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'km', data, backgroundColor: 'rgba(124,181,24,0.75)', borderRadius: 6, maxBarThickness: 44 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.raw} km` } } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: '#F3F4F6' }, ticks: { font: { family: 'Poppins', size: 11 }, callback: v => v + 'km' } },
+        x: { grid: { display: false }, ticks: { font: { family: 'Poppins', size: 10 } } }
+      }
+    }
+  });
+}
+
+function addRunSession() {
+  const km = parseFloat(document.getElementById('run-km').value);
+  const minutes = parseFloat(document.getElementById('run-min').value);
+  if (!km || km <= 0 || km > 200) { showToast('Introduce una distancia válida (km)', 'error'); return; }
+  if (!minutes || minutes <= 0 || minutes > 1440) { showToast('Introduce un tiempo válido (min)', 'error'); return; }
+
+  const before = Data.runRecords(App.runLog);
+  const { pace, kmh, kcal } = Data.calcRunSession(runType, km, minutes, App.user.currentWeight);
+  const session = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    date: new Date().toISOString(), type: runType,
+    km: +km.toFixed(2), minutes: Math.round(minutes),
+    pace: +pace.toFixed(3), kmh: +kmh.toFixed(2), kcal
+  };
+  App.runLog.push(session);
+  Storage.set('runLog', App.runLog);
+  Storage.set('runRecords', Data.runRecords(App.runLog)); // cache reconstruible
+
+  // ¿Récord batido?
+  const after = Data.runRecords(App.runLog);
+  let recordMsg = '';
+  if (after.longestKm > before.longestKm) recordMsg = `🏆 ¡Récord de distancia: ${after.longestKm.toFixed(1)} km!`;
+  else if (before.bestPace > 0 && after.bestPace > 0 && after.bestPace < before.bestPace) recordMsg = `🏆 ¡Nuevo mejor ritmo: ${fmtPace(after.bestPace)} min/km!`;
+  else if (after.bestWeekKm > before.bestWeekKm) recordMsg = `🏆 ¡Mejor semana: ${after.bestWeekKm.toFixed(1)} km!`;
+
+  showToast(`✅ ${km.toFixed(1)} km · ${kcal} kcal · ${fmtPace(pace)}/km`);
+  if (recordMsg) setTimeout(() => showToast(recordMsg, 'success', 3500), 600);
+
+  document.getElementById('run-km').value = '';
+  document.getElementById('run-min').value = '';
+  renderRunContent();
+}
+
+function deleteRunSession(id) {
+  App.runLog = App.runLog.filter(s => s.id !== id);
+  Storage.set('runLog', App.runLog);
+  Storage.set('runRecords', Data.runRecords(App.runLog));
+  renderRunContent();
+}
+
 // ===== TRACK SCREEN =====
 function renderTrack() {
   const cw = parseFloat(App.user.currentWeight);
@@ -912,12 +1129,17 @@ function deleteWeight(idx) {
 
 // ===== CHAT SCREEN =====
 function renderChat() {
+  Voice.initState();
   const autoMode = Gemini.isAutoMode();
   const hasKey = autoMode || !!App.geminiKey;
+  const voiceToggle = (hasKey && Voice.ttsSupported)
+    ? `<button class="voice-toggle" id="voice-toggle" onclick="toggleVoice()" title="Voz del coach">${Voice.enabled ? '🔊' : '🔇'}</button>`
+    : '';
   document.getElementById('screen-chat').innerHTML = `
     <div class="chat-header-info">
       <span>🤖</span>
-      <span>FitCoach AI — Nutricionista + Entrenador Personal. Powered by Gemini.</span>
+      <span style="flex:1">FitCoach AI — Nutricionista + Entrenador Personal. Powered by Gemini.</span>
+      ${voiceToggle}
     </div>
     ${!hasKey ? renderApiSetup() : renderChatInterface()}
   `;
@@ -960,7 +1182,10 @@ function renderChatInterface() {
       </div>
       <div class="chat-messages" id="chat-messages"></div>
       <div class="chat-input-wrap">
-        <textarea class="chat-textarea" id="chat-input" placeholder="Pregunta al FitCoach..." rows="1"></textarea>
+        <textarea class="chat-textarea" id="chat-input" placeholder="Escribe o pulsa 🎤 para hablar..." rows="1"></textarea>
+        ${Voice.supported ? `<button class="chat-mic-btn" id="mic-btn" onclick="toggleMic()" title="Hablar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        </button>` : ''}
         <button class="chat-send-btn" id="send-btn" onclick="sendMessage()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
@@ -994,6 +1219,7 @@ async function sendMessage() {
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
   if (!text || (!App.geminiKey && !Gemini.isAutoMode())) return;
+  Voice.stopSpeaking(); // corta cualquier lectura en curso al lanzar una nueva pregunta
   input.value = '';
   input.style.height = 'auto';
 
@@ -1023,6 +1249,7 @@ async function sendMessage() {
     App.chatHistory.push({ role: 'ai', text: response, time: new Date().toISOString() });
     Storage.set('chatHistory', App.chatHistory);
     renderMessages();
+    Voice.speak(response); // el coach lee su respuesta en voz alta (si la voz está activada)
   } catch (err) {
     typingEl.remove();
     App.chatHistory.push({ role: 'ai', text: `⚠️ ${err.message}`, time: new Date().toISOString() });
@@ -1051,7 +1278,8 @@ function showSettings() {
   const modal = document.getElementById('settings-modal');
   if (!modal) return;
   const u = App.user;
-  const notifEnabled = Storage.get('notifEnabled') || false;
+  const rem = Reminders.get();
+  const remOn = rem.enabled && ('Notification' in window) && Notification.permission === 'granted';
   modal.innerHTML = `
     <div class="modal-overlay" onclick="closeSettings()">
       <div class="modal-sheet" onclick="event.stopPropagation()">
@@ -1063,8 +1291,8 @@ function showSettings() {
           <div class="settings-arrow">›</div>
         </div>
         <div class="settings-item" onclick="changeEquipment()">
-          <div class="settings-icon">${u.equipment === 'gym' ? '🏋️' : '🏠'}</div>
-          <div class="settings-text"><h4>Entorno de entrenamiento</h4><p>${u.equipment === 'gym' ? 'Gimnasio' : 'En casa'}</p></div>
+          <div class="settings-icon">${equipMeta(u.equipment).icon}</div>
+          <div class="settings-text"><h4>Entorno de entrenamiento</h4><p>${equipMeta(u.equipment).name}</p></div>
           <div class="settings-arrow">›</div>
         </div>
         <div class="settings-item" onclick="changeApiKey()">
@@ -1077,12 +1305,10 @@ function showSettings() {
           <div class="settings-text"><h4>Actualizar peso</h4><p>Peso actual: ${u.currentWeight} kg</p></div>
           <div class="settings-arrow">›</div>
         </div>
-        <div class="settings-item">
+        <div class="settings-item" onclick="openReminders()">
           <div class="settings-icon">🔔</div>
-          <div class="settings-text"><h4>Notificaciones</h4><p>Recordatorios diarios</p></div>
-          <div class="toggle-switch ${notifEnabled ? 'on' : ''}" onclick="toggleNotifications(this)">
-            <div class="toggle-knob"></div>
-          </div>
+          <div class="settings-text"><h4>Recordatorios</h4><p>${remOn ? '✓ Activados' : 'Desactivados'}</p></div>
+          <div class="settings-arrow">›</div>
         </div>
         <button class="danger-btn" onclick="confirmReset()">🗑️ Resetear app</button>
       </div>
@@ -1107,11 +1333,22 @@ function changeDiet() {
   navigate('diet');
 }
 
+function equipMeta(eq) {
+  const map = {
+    gym:     { icon: '🏋️', name: 'Gimnasio' },
+    home:    { icon: '🏠', name: 'En casa' },
+    outdoor: { icon: '🏃', name: 'Correr / Andar' }
+  };
+  return map[eq] || map.home;
+}
+
 function changeEquipment() {
-  App.user.equipment = App.user.equipment === 'gym' ? 'home' : 'gym';
+  const order = ['gym', 'home', 'outdoor'];
+  const next = order[(order.indexOf(App.user.equipment) + 1) % order.length];
+  App.user.equipment = next;
   Storage.set('user', App.user);
   closeSettings();
-  showToast(`Entorno cambiado a: ${App.user.equipment === 'gym' ? 'Gimnasio 🏋️' : 'Casa 🏠'}`);
+  showToast(`Entorno cambiado a: ${equipMeta(next).name} ${equipMeta(next).icon}`);
   navigate('workout');
 }
 
@@ -1139,15 +1376,123 @@ function updateWeight() {
   }
 }
 
-function toggleNotifications(el) {
-  const enabled = !el.classList.contains('on');
-  el.classList.toggle('on', enabled);
-  Storage.set('notifEnabled', enabled);
-  if (enabled && 'Notification' in window) {
+// ===== RECORDATORIOS (panel de configuración) =====
+function openReminders() {
+  closeSettings();
+  const modal = document.getElementById('reminders-modal');
+  if (!modal) return;
+  const r = Reminders.get();
+  const sw = (on) => `<div class="toggle-switch ${on ? 'on' : ''}" onclick="toggleRem(this)"><div class="toggle-knob"></div></div>`;
+  const time = (id, val) => `<input type="time" id="${id}" value="${val}" class="rem-time">`;
+
+  modal.innerHTML = `
+    <div class="modal-overlay" onclick="closeReminders()">
+      <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="modal-handle"></div>
+        <div class="modal-title">🔔 Recordatorios</div>
+        <p class="text-sm text-muted" style="margin:-6px 2px 14px">Avisos en tu dispositivo. Funcionan con la app abierta o en segundo plano reciente.</p>
+
+        <div class="settings-item" style="cursor:default">
+          <div class="settings-icon">⚡</div>
+          <div class="settings-text"><h4>Activar recordatorios</h4><p>Interruptor general</p></div>
+          ${sw(r.enabled)}<input type="hidden" id="rem-enabled" value="${r.enabled ? 1 : 0}">
+        </div>
+
+        <div class="rem-group">
+          <div class="rem-group-head">
+            <span>🍽️ Comidas</span>${sw(r.meals.on)}<input type="hidden" id="rem-meals" value="${r.meals.on ? 1 : 0}">
+          </div>
+          <div class="rem-rows">
+            <div class="rem-row"><span>🌅 Desayuno</span>${time('rem-breakfast', r.meals.breakfast)}</div>
+            <div class="rem-row"><span>☀️ Comida</span>${time('rem-lunch', r.meals.lunch)}</div>
+            <div class="rem-row"><span>🍎 Merienda</span>${time('rem-snack', r.meals.snack)}</div>
+            <div class="rem-row"><span>🌙 Cena</span>${time('rem-dinner', r.meals.dinner)}</div>
+          </div>
+        </div>
+
+        <div class="rem-group">
+          <div class="rem-group-head">
+            <span>💧 Agua</span>${sw(r.water.on)}<input type="hidden" id="rem-water" value="${r.water.on ? 1 : 0}">
+          </div>
+          <div class="rem-rows">
+            <div class="rem-row"><span>Desde</span>${time('rem-water-from', r.water.from)}</div>
+            <div class="rem-row"><span>Hasta</span>${time('rem-water-to', r.water.to)}</div>
+            <div class="rem-row"><span>Cada</span>
+              <select id="rem-water-every" class="rem-time">
+                <option value="1" ${r.water.every == 1 ? 'selected' : ''}>1 hora</option>
+                <option value="2" ${r.water.every == 2 ? 'selected' : ''}>2 horas</option>
+                <option value="3" ${r.water.every == 3 ? 'selected' : ''}>3 horas</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="rem-group">
+          <div class="rem-group-head">
+            <span>💪 Entreno</span>${sw(r.workout.on)}<input type="hidden" id="rem-workout" value="${r.workout.on ? 1 : 0}">
+          </div>
+          <div class="rem-rows">
+            <div class="rem-row"><span>Hora</span>${time('rem-workout-time', r.workout.time)}</div>
+          </div>
+        </div>
+
+        <div class="rem-group">
+          <div class="rem-group-head">
+            <span>⚖️ Pesaje</span>${sw(r.weighin.on)}<input type="hidden" id="rem-weighin" value="${r.weighin.on ? 1 : 0}">
+          </div>
+          <div class="rem-rows">
+            <div class="rem-row"><span>Hora</span>${time('rem-weighin-time', r.weighin.time)}</div>
+          </div>
+        </div>
+
+        <button class="ob-btn" style="margin-top:8px" onclick="saveReminders()">Guardar recordatorios</button>
+      </div>
+    </div>
+  `;
+  modal.classList.remove('hidden');
+}
+
+function closeReminders() {
+  document.getElementById('reminders-modal').classList.add('hidden');
+}
+
+// Alterna el toggle visual y sincroniza el input oculto contiguo (si lo hay)
+function toggleRem(el) {
+  const on = !el.classList.contains('on');
+  el.classList.toggle('on', on);
+  const hidden = el.nextElementSibling;
+  if (hidden && hidden.type === 'hidden') hidden.value = on ? 1 : 0;
+}
+
+function saveReminders() {
+  const g = id => document.getElementById(id);
+  const on = id => g(id).value === '1';
+  const r = {
+    enabled: on('rem-enabled'),
+    meals: { on: on('rem-meals'), breakfast: g('rem-breakfast').value, lunch: g('rem-lunch').value, snack: g('rem-snack').value, dinner: g('rem-dinner').value },
+    water: { on: on('rem-water'), from: g('rem-water-from').value, to: g('rem-water-to').value, every: parseInt(g('rem-water-every').value) },
+    workout: { on: on('rem-workout'), time: g('rem-workout-time').value },
+    weighin: { on: on('rem-weighin'), time: g('rem-weighin-time').value }
+  };
+
+  const finish = () => {
+    Reminders.save(r);
+    Reminders.init();
+    closeReminders();
+    showToast(r.enabled ? '🔔 Recordatorios activados' : 'Recordatorios guardados');
+  };
+
+  if (r.enabled && 'Notification' in window && Notification.permission !== 'granted') {
     Notification.requestPermission().then(perm => {
-      if (perm === 'granted') showToast('🔔 Notificaciones activadas');
-      else { el.classList.remove('on'); Storage.set('notifEnabled', false); showToast('Permiso denegado', 'error'); }
+      if (perm !== 'granted') { r.enabled = false; showToast('Permiso de notificaciones denegado', 'error'); }
+      finish();
     });
+  } else if (r.enabled && !('Notification' in window)) {
+    r.enabled = false;
+    showToast('Tu navegador no soporta notificaciones', 'error');
+    finish();
+  } else {
+    finish();
   }
 }
 

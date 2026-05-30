@@ -130,6 +130,7 @@
       <div class="ob-chips">
         <button class="ob-chip" data-group="equipment" onclick="selectChip('equipment','gym',this)" style="font-size:1rem;padding:14px 28px">🏋️ Gimnasio</button>
         <button class="ob-chip" data-group="equipment" onclick="selectChip('equipment','home',this)" style="font-size:1rem;padding:14px 28px">🏠 En casa</button>
+        <button class="ob-chip" data-group="equipment" onclick="selectChip('equipment','outdoor',this)" style="font-size:1rem;padding:14px 28px">🏃 Correr / Andar</button>
       </div>
       <div class="ob-form" style="margin-top:32px">
         <button class="ob-btn" onclick="obNext()">🚀 ¡Comenzar mi plan!</button>
@@ -204,11 +205,16 @@
 <!-- Settings Modal -->
 <div id="settings-modal" class="hidden"></div>
 
+<!-- Reminders Modal -->
+<div id="reminders-modal" class="hidden"></div>
+
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/gemini.js"></script>
 <script src="js/data.js"></script>
+<script src="js/reminders.js"></script>
+<script src="js/voice.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

@@ -414,5 +414,67 @@ const Data = {
 
   getDietColor(diet) {
     return this.DIETS[diet]?.color || '#7CB518';
+  },
+
+  // ===== CORRER / ANDAR (entorno outdoor) =====
+  RUN_MET: { run: 9.8, walk: 3.8 },
+
+  // Calcula ritmo (min/km), velocidad (km/h) y calorías (MET × peso × horas)
+  calcRunSession(type, km, minutes, weight) {
+    km = parseFloat(km); minutes = parseFloat(minutes); weight = parseFloat(weight) || 70;
+    const pace = km > 0 ? minutes / km : 0;
+    const kmh = minutes > 0 ? km / (minutes / 60) : 0;
+    const met = this.RUN_MET[type] || this.RUN_MET.run;
+    const kcal = Math.round(met * weight * (minutes / 60));
+    return { pace, kmh, kcal };
+  },
+
+  // Inicio del rango: 'day' (hoy 00:00), 'week' (lunes), 'month' (día 1)
+  runRangeStart(range) {
+    const now = new Date();
+    if (range === 'week') {
+      const idx = now.getDay() === 0 ? 6 : now.getDay() - 1;
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate() - idx);
+    }
+    if (range === 'month') return new Date(now.getFullYear(), now.getMonth(), 1);
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  },
+
+  runFilter(log, range) {
+    const from = this.runRangeStart(range);
+    return (log || []).filter(s => new Date(s.date) >= from);
+  },
+
+  runTotals(sessions) {
+    const km = sessions.reduce((a, s) => a + (s.km || 0), 0);
+    const minutes = sessions.reduce((a, s) => a + (s.minutes || 0), 0);
+    const kcal = sessions.reduce((a, s) => a + (s.kcal || 0), 0);
+    return { count: sessions.length, km, minutes, kcal, pace: km > 0 ? minutes / km : 0 };
+  },
+
+  // Clave del lunes de la semana de una fecha (para agrupar por semana)
+  _mondayKey(d) {
+    const x = new Date(d);
+    const idx = x.getDay() === 0 ? 6 : x.getDay() - 1;
+    return new Date(x.getFullYear(), x.getMonth(), x.getDate() - idx).toDateString();
+  },
+
+  // Récords reconstruibles SIEMPRE desde el log (defensivo)
+  runRecords(log) {
+    log = log || [];
+    if (!log.length) return { longestKm: 0, bestPace: 0, streak: 0, bestWeekKm: 0 };
+    const longestKm = Math.max(...log.map(s => s.km || 0));
+    const paces = log.filter(s => (s.km || 0) >= 0.5 && s.pace > 0).map(s => s.pace);
+    const bestPace = paces.length ? Math.min(...paces) : 0;
+    const weeks = {};
+    log.forEach(s => { const k = this._mondayKey(s.date); weeks[k] = (weeks[k] || 0) + (s.km || 0); });
+    const bestWeekKm = Math.max(...Object.values(weeks));
+    // Racha: días seguidos con actividad terminando hoy (o ayer si hoy aún sin sesión)
+    const days = new Set(log.map(s => new Date(s.date).toDateString()));
+    let streak = 0;
+    const cursor = new Date();
+    if (!days.has(cursor.toDateString())) cursor.setDate(cursor.getDate() - 1);
+    while (days.has(cursor.toDateString())) { streak++; cursor.setDate(cursor.getDate() - 1); }
+    return { longestKm, bestPace, streak, bestWeekKm };
   }
 };

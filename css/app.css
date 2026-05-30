@@ -427,3 +427,41 @@ svg{display:block}
 @media(min-width:481px){
   .app-shell{box-shadow:0 0 40px rgba(0,0,0,0.15)}
 }
+
+/* ===== Recordatorios ===== */
+.rem-group{background:var(--bg);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:12px}
+.rem-group-head{display:flex;align-items:center;justify-content:space-between;font-weight:600;font-size:0.9rem;color:var(--text)}
+.rem-group-head span{display:flex;align-items:center;gap:8px}
+.rem-rows{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.rem-row{display:flex;align-items:center;justify-content:space-between;font-size:0.85rem;color:var(--text-2)}
+.rem-time{background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;font-size:0.85rem;font-weight:600;color:var(--text);font-family:'Poppins',sans-serif;transition:var(--t)}
+.rem-time:focus{border-color:var(--primary);outline:none}
+
+/* ===== Correr / Andar (outdoor) ===== */
+.run-form{margin-bottom:16px}
+.run-type-toggle{display:flex;gap:8px;margin-bottom:14px}
+.run-type-btn{flex:1;padding:12px;border-radius:var(--r-sm);border:2px solid var(--border);background:var(--surface);font-family:'Poppins',sans-serif;font-weight:600;font-size:0.9rem;color:var(--text-2);cursor:pointer;transition:var(--t)}
+.run-type-btn.active{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(124,181,24,0.3)}
+.run-inputs{display:flex;gap:10px;margin-bottom:14px}
+.run-field{flex:1;display:flex;flex-direction:column;gap:6px}
+.run-field label{font-size:0.72rem;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px}
+.run-field input{background:var(--bg);border:2px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;font-size:1.1rem;font-weight:600;color:var(--text);text-align:center;font-family:'Poppins',sans-serif;transition:var(--t);width:100%}
+.run-field input:focus{border-color:var(--primary);outline:none}
+.run-stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.run-stat{background:var(--surface);border-radius:var(--r);padding:14px 8px;box-shadow:var(--sh);text-align:center}
+.run-stat-val{font-size:1.25rem;font-weight:700;color:var(--primary)}
+.run-stat-lbl{font-size:0.68rem;color:var(--text-3);margin-top:2px}
+.run-records{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+.record-card{background:var(--surface);border-radius:var(--r);padding:14px;box-shadow:var(--sh);display:flex;align-items:center;gap:10px}
+.record-emoji{font-size:1.5rem;flex-shrink:0}
+.record-val{font-size:1.05rem;font-weight:700;color:var(--text)}
+.record-lbl{font-size:0.7rem;color:var(--text-3);margin-top:1px}
+.run-history-list .log-item:last-child{border:none}
+
+/* ===== Voz: micrófono y altavoz ===== */
+.chat-mic-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);color:var(--primary);display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--border);flex-shrink:0;transition:var(--t)}
+.chat-mic-btn:hover{border-color:var(--primary);transform:scale(1.05)}
+.chat-mic-btn.listening{background:#EF4444;border-color:#EF4444;color:#fff;animation:mic-pulse 1.2s ease-in-out infinite}
+@keyframes mic-pulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.5)}50%{box-shadow:0 0 0 8px rgba(239,68,68,0)}}
+.voice-toggle{background:none;border:none;cursor:pointer;font-size:1.1rem;flex-shrink:0;padding:2px 4px;border-radius:8px;transition:var(--t)}
+.voice-toggle:hover{background:rgba(124,181,24,0.12)}
